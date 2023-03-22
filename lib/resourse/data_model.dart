@@ -1,25 +1,23 @@
-class DataModelJson{
-  //data Type
-  int? id;
-  String? name;
-  String? email;
-  String? website;
-// constructor
-  DataModelJson(
-      {
-       this.id,
-      this.name,
-      this.email,
-      this.website
-      }
-   );
-  //method that assign values to respective datatype vairables
-  DataModelJson.fromJson(Map<String,dynamic> json)
-  {
-    id = json['id'];
-    name =json['name'];
-    email = json['email'];
-    website = json['website'];
-  
+
+
+
+class DataModelJson {
+   int? id;
+   String ?name;
+   String ?email;
+    String ? error;
+
+
+  DataModelJson({ this.id,  this.name,  this.email});
+
+DataModelJson.withError(String errorMessage) {
+    error = errorMessage;
+  }
+  factory DataModelJson.fromJson(Map<String, dynamic> json) {
+    return DataModelJson(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+    );
   }
 }

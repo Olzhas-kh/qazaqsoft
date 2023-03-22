@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' as rootBundle;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test_app/resourse/data_model.dart';
+import 'package:test_app/user_bloc/bloc/user_bloc.dart';
 
 import '../utils/colors.dart';
 
@@ -17,24 +19,122 @@ class UsersList extends StatefulWidget {
 
 class _UsersListState extends State<UsersList> {
 
-Future<List<DataModelJson>> readJsonData() async {
-    //read json file
-    final jsondata = await rootBundle.rootBundle.loadString('assets/users.json');
-    //decode json data as list
-    final list = json.decode(jsondata) as List<dynamic>;
-    
-    //map json and initialize using DataModel
-    return list.map((e) => DataModelJson.fromJson(e)).toList();
+  final UserBloc _userBloc = UserBloc();
+
+  @override
+  void initState() {
+    _userBloc.add(GetUserList());
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder(
-        future: readJsonData(),
-        builder: (context,data){
-          if(data.hasError){
-            return  Center(
+      body: _userList()
+     
+    );
+  }
+   Widget _userList() {
+    return Container(
+      margin: const EdgeInsets.all(8.0),
+      child: BlocProvider(
+        create: (_) => _userBloc,
+        child: BlocListener<UserBloc, UserState>(
+          listener: (context, state) {
+            if (state is UserError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message!),
+                ),
+              );
+            }
+          },
+          child: BlocBuilder<UserBloc, UserState>(
+            builder: (context, state) {
+              if (state is UserInitial) {
+                return _Loading();
+              } else if (state is UserLoading) {
+                return _Loading();
+              } else if (state is UserLoaded) {
+                return _userCard(context, state.userModel);
+              } else if (state is UserError) {
+                return _errorPage();
+              } else {
+                return Container();
+              }
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _userCard(BuildContext context, DataModelJson model) {
+    return 
+            ListView(
+            
+            children:[ 
+              const Text(
+                    "Пользователи",
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold),
+                  ),
+                 
+                    const SizedBox(height: 20,),
+                    ListView.builder(
+                      
+                      shrinkWrap: true,
+                      itemCount: 15,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (BuildContext context, int index) =>
+                        
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Row(
+                            
+                            children: [
+                              Image.asset("assets/images/user_icon.png",height: 60,width: 60,),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children:  [
+                                  Text(
+                                    model.name.toString(),
+                                    style: const TextStyle(
+                                        fontSize: 20, fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    model.email.toString(),
+                                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                  ),
+                                  Text(
+                                    model.id.toString(),
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      
+                    ),
+                  ]
+              
+            
+          );
+          
+        
+  }
+
+  Widget _Loading() => const Center(child: CircularProgressIndicator());
+
+  Widget _errorPage(){
+    return 
+    Center(
               
               child: Container(
                 padding: const EdgeInsets.all(44),
@@ -74,80 +174,6 @@ Future<List<DataModelJson>> readJsonData() async {
                   ],),
               ),
             );
-            
-          }else if(data.hasData){
-            var items = data.data as List<DataModelJson>;
-            return Container(
-          
-          padding: const EdgeInsets.fromLTRB(24, 64, 24, 0),
-          child: ListView(
-            
-            children:[ 
-              const Text(
-                    "Пользователи",
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold),
-                  ),
-                 
-                    const SizedBox(height: 20,),
-                    ListView.builder(
-                      
-                      shrinkWrap: true,
-                      itemCount: items.isNotEmpty? items.length:0,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (BuildContext context, int index) =>
-                        
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Row(
-                            
-                            children: [
-                              Image.asset("assets/images/user_icon.png",height: 60,width: 60,),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children:  [
-                                  Text(
-                                    items[index].name.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 20, fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    items[index].email.toString(),
-                                    style: const TextStyle(color: Colors.grey, fontSize: 13),
-                                  ),
-                                  Text(
-                                    items[index].website.toString(),
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                      
-                    ),
-                  ]
-              
-            
-          ),
-          
-        );
-          }else{
-            return const Center(
-              child: CircularProgressIndicator(color: Color.fromRGBO(155, 81, 224, 1),),
-            );
-          }
 
-
-        },
-
-        
-      ),
-    );
   }
 }
